@@ -271,11 +271,16 @@ bool set_process_priority(enum ggml_sched_priority prio) {
         case GGML_SCHED_PRIO_REALTIME: p = -20; break;
     }
 
+#ifdef __wasi__
+    GGML_UNUSED(p); // WASI has no process priority
+    return false;
+#else
     if (setpriority(PRIO_PROCESS, 0, p) != 0) {
         COM_WRN("failed to set process priority %d : %s (%d)\n", prio, strerror(errno), errno);
         return false;
     }
     return true;
+#endif
 }
 
 #endif
@@ -1059,7 +1064,7 @@ std::string fs_get_cache_directory() {
         if (cache_directory.empty()) {
             throw std::runtime_error("Failed to find %LOCALAPPDATA% directory");
         }
-#elif defined(__EMSCRIPTEN__)
+#elif defined(__EMSCRIPTEN__) || defined(__wasi__)
         GGML_ABORT("not implemented on this platform");
 #else
 #  error Unknown architecture
@@ -1104,7 +1109,7 @@ std::string fs_get_config_directory() {
     if (config_directory.empty()) {
         throw std::runtime_error("Failed to find %APPDATA% directory");
     }
-#elif defined(__EMSCRIPTEN__)
+#elif defined(__EMSCRIPTEN__) || defined(__wasi__)
     // caller decides what to do when there is no config directory
     throw std::runtime_error("not implemented on this platform");
 #else

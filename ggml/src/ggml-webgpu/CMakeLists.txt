@@ -65,6 +65,16 @@ if(EMSCRIPTEN)
         target_compile_options(ggml-webgpu PRIVATE "-fexceptions")
         target_link_options(ggml-webgpu INTERFACE "-sASYNCIFY" "-exceptions")
     endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+    # wasi:webgpu, via Dawn's C++ wrapper over the wasi-webgpu-headers bindings
+    set(DAWN_WASI_WEBGPU_CPP_DIR "" CACHE PATH "Path to dawn_wasi_webgpu_cpp")
+
+    if(NOT DAWN_WASI_WEBGPU_CPP_DIR)
+        message(FATAL_ERROR "Set DAWN_WASI_WEBGPU_CPP_DIR to a dawn_wasi_webgpu_cpp checkout")
+    endif()
+
+    add_subdirectory(${DAWN_WASI_WEBGPU_CPP_DIR} ${CMAKE_CURRENT_BINARY_DIR}/dawn_wasi_webgpu_cpp)
+    set(DawnWebGPU_TARGET dawn_webgpu_cpp)
 else()
     find_package(Dawn REQUIRED)
     set(DawnWebGPU_TARGET dawn::webgpu_dawn)
